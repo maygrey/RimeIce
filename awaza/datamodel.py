@@ -45,13 +45,12 @@ class User:
         self.tld_map.maps[time].counters[dom].increment()
     	self.tld_map.store()
 
-    def remove_visit(self, host, time):
+    def remove_visits(self, time):
         """
-            Remove a visit to the host at the user's map
-        """
-        self.tld_map.maps[time].clear()
-
-
+            Remove a map of visits at "time" from the user's map
+        """  
+        del self.tld_map.maps[time]
+        self.tld_map.store()
 
 def get_random_host(max_doms):
     """
@@ -62,7 +61,8 @@ def get_random_host(max_doms):
 
 def create_all_user_entries(user_id, max_doms, max_user_visits):
     """
-        Given max_user_visits and a user, do random visits to the listed hosts till arrive to max_user_visits
+        Given max_user_visits and a user, do random visits to 
+        the listed hosts till arrive to max_user_visits
     """
     user = User(client, user_id)
     for visit_hour in range(0,23):
@@ -78,22 +78,26 @@ def create_all_entries():
         visits by user in an hour
     """
     max_user_id = 10
-    max_doms = 1000
+    max_doms = 100
     max_user_visits = 5
     for user_id in range(0, max_user_id):
       create_all_user_entries(0, max_doms, max_user_visits)
 
 
 def query_stats_by_user(client, user_id):
+    """
+        Request(read) the last 24 hours counters of user_id
+    """
     user = User(client, user_id)
+    counter = 0
     print(user.tld_map.value)
     current24 = {}
     for key in user.tld_map.value:
         for tld in user.tld_map.value[key]:
-            print(user.tld_map.value[key][tld])
+            #print(user.tld_map.value[key][tld])
             if current24.has_key(tld):
                 current24[tld[0]] += 1
-                print(current24)
+                #print(current24[tld])
             else :
                 current24[tld[0]] = 1
                 print(current24)
@@ -101,18 +105,34 @@ def query_stats_by_user(client, user_id):
     
 
 def query_stats():
+    """
+        generic stats query
+    """
     current_user_id = 0;
     user_dict = query_stats_by_user(client, current_user_id)
 
-def cleaner(client, users):
-    for i in range(users):
-        pass
-def reader(client, n, users, tlds, times):
+def reader(client, n, users, date):
+    """
+        Generic read of n users
+    """
     #todo date
+    key = randrange(10)
+    usertemp = []
     for i in range(n):
-        pass
-def writer():
-    pass
+        usertemp[i] = User(client,i)
+    return usertemp
+
+
+
+def writer(client, n, users, tlds, time):
+    for i in range(n):
+        date = "20141218" + str(randrange(23)).zfill(2)
+        key = randrange(users)
+        tld = tlds
+        usertemp = User(key)
+        usertemp.visit_host(tld, date)
+    return
+
 if __name__ == '__main__':
 	#usuario = User(client, '001')
     #create_all_entries()
