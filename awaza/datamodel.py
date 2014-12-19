@@ -103,7 +103,6 @@ def query_stats_by_user(client, user_id):
                 print(current24)
     return current24
     
-
 def query_stats():
     """
         generic stats query
@@ -122,19 +121,55 @@ def reader(client, n, users, date):
         usertemp[i] = User(client,i)
     return usertemp
 
-
-
 def writer(client, n, users, tlds, time):
+    """
+        write a number of users visits on random user_id 
+        random domain(tld) and random date (time)
+    """
     for i in range(n):
         date = "20141218" + str(randrange(23)).zfill(2)
         key = randrange(users)
-        tld = tlds
-        usertemp = User(key)
+        tld = "dom" + str(randrange(tlds)) + ".com"
+        usertemp = User(client, key)
         usertemp.visit_host(tld, date)
-    return
+    
+def parse_read_args():
+    if len(sys.argv) != 4:
+        print("Bad read  arguments number")
+    count = int(sys.argv[2])
+    max_user_id = int(sys.argv[3])
+    max_domain_id = int(sys.argv[4])
+    return count, max_user_id, max_domain_id
+
+def parse_write_args():
+    if len(sys.argv) != 6:
+        print("Bad write arguments number")
+    count = int(sys.argv[2])
+    max_user_id = int(sys.argv[3])
+    max_domain_id = int(sys.argv[4])
+    date = sys.argv[5]
+    return count, max_user_id, max_domain_id, date
 
 if __name__ == '__main__':
 	#usuario = User(client, '001')
     #create_all_entries()
-    query_stats()
+    #query_stats()
 	#usuario.visit_host('elpais', 201412130000)
+    """
+
+    """
+    if len(sys.argv) < 2:
+        print("Bad num of parameters")
+        sys.exit(0)
+    if (sys.argv[1] != "Read") and (sys.argv[1] != "Write"):
+         print
+    if sys.argv[1] == "Read":
+        parsed_args = parse_read_args()
+        reader (client, parsed_args[0], parsed_args[1], parsed_args[2])
+    elif sys.argv[1] == "Write":
+        parsed_args = parse_write_args()
+        writer(client, parsed_args[0], parsed_args[1], parsed_args[2], parsed_args[3])
+
+
+
+
