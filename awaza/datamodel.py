@@ -118,7 +118,7 @@ def reader(client, n, users, date):
     key = randrange(10)
     usertemp = []
     for i in range(n):
-        usertemp[i] = User(client,i)
+        usertemp[i] = query_stats_by_user(client,i)
     return usertemp
 
 def writer(client, n, users, tlds, time):
