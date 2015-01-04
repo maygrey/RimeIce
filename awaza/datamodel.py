@@ -1,6 +1,7 @@
 from riak import RiakClient, RiakNode, RiakObject
 from riak.datatypes import Map
 from random import randrange
+import unittest
 import sys
 
 client = RiakClient()
@@ -24,6 +25,10 @@ def extract_dom(host):
 
 class User:
     def __init__(self, client, user_id):
+        """
+            get action to the bucket "trackers" on type "maps"
+            includes user creation on key = user_id
+        """
         self.client = client
         #self.maxdate = 99999999
         #self.mindate = 00000000
@@ -38,12 +43,11 @@ class User:
         """
             Insert a visit to the host at the user's map
         """
-        hour = str(extract_hour(time))
         dom = extract_dom(host)
         #if distance(maxdate)
         #if time < self.maxdate:
         self.tld_map.maps[time].counters[dom].increment()
-    	self.tld_map.store()
+        self.tld_map.store()
 
     def remove_visits(self, time):
         """
@@ -86,21 +90,16 @@ def create_all_entries():
 
 def query_stats_by_user(client, user_id):
     """
-        Request(read) the last 24 hours counters of user_id
+        Request(read) and sums the last 24 hours counters of user_id
     """
     user = User(client, user_id)
     counter = 0
-    print(user.tld_map.value)
+    #print(user.tld_map.value)
     current24 = {}
     for key in user.tld_map.value:
-        for tld in user.tld_map.value[key]:
-            #print(user.tld_map.value[key][tld])
-            if current24.has_key(tld):
-                current24[tld[0]] += 1
-                #print(current24[tld])
-            else :
-                current24[tld[0]] = 1
-                print(current24)
+        #for tld in user.tld_map.value[key]:
+        remove_visits()
+
     return current24
     
 def query_stats():
@@ -110,7 +109,8 @@ def query_stats():
     current_user_id = 0;
     user_dict = query_stats_by_user(client, current_user_id)
 
-def reader(client, n, users, date):
+#def reader(client, n, users, date):
+def reader(client,n):
     """
         Generic read of n users
     """
@@ -124,7 +124,7 @@ def reader(client, n, users, date):
 def writer(client, n, users, tlds, time):
     """
         write a number of users visits on random user_id 
-        random domain(tld) and random date (time)
+        random domain(tld) and random date (time YYYYMMDD + random(HH))
     """
     for i in range(n):
         date = "20141218" + str(randrange(23)).zfill(2)
@@ -132,11 +132,21 @@ def writer(client, n, users, tlds, time):
         tld = "dom" + str(randrange(tlds)) + ".com"
         usertemp = User(client, key)
         usertemp.visit_host(tld, date)
+
+def cleaner(client, users):
+    """
+        Delete x users
+    """
+    bucket = client.bucket_type('maps').bucket('trackers')
+    for i in range(users):
+        bucket.delete(str(i))
     
+
 def parse_read_args():
     if len(sys.argv) != 4:
         print("Bad read  arguments number")
-    count = int(sys.argv[2])
+        print("Usage: python datamodel.py Read <count> <max user_id> <max_domain_id>")
+    count = int(sys.argv[2]) 
     max_user_id = int(sys.argv[3])
     max_domain_id = int(sys.argv[4])
     return count, max_user_id, max_domain_id
@@ -144,32 +154,41 @@ def parse_read_args():
 def parse_write_args():
     if len(sys.argv) != 6:
         print("Bad write arguments number")
+        print("Usage: python datamodel.py Write <count> <max user_id> <max_domain_id> <date>")
     count = int(sys.argv[2])
     max_user_id = int(sys.argv[3])
     max_domain_id = int(sys.argv[4])
     date = sys.argv[5]
     return count, max_user_id, max_domain_id, date
 
+def parse_clean_args():
+    if len(sys.argv) != 3:
+        print("Bad clean arguments number")
+        print("Usage: python datamodel.py Clean <max user_id>")
+    num_users = int(sys.argv[2])
+    return [num_users]
+
 if __name__ == '__main__':
 	#usuario = User(client, '001')
     #create_all_entries()
-    #query_stats()
+    #query_stats_by_user(client, 2)
 	#usuario.visit_host('elpais', 201412130000)
-    """
-
-    """
+    
     if len(sys.argv) < 2:
         print("Bad num of parameters")
         sys.exit(0)
-    if (sys.argv[1] != "Read") and (sys.argv[1] != "Write"):
-         print
+    if (sys.argv[1] != "Read") and (sys.argv[1] != "Write") and (sys.argv[1] != "Clean"):
+         print("Usage: python datamodel.py Write/Read <count> <max user_id> <max_domain_id> <date>")
+         print ("                           Clean <max user_id>")
     if sys.argv[1] == "Read":
         parsed_args = parse_read_args()
         reader (client, parsed_args[0], parsed_args[1], parsed_args[2])
     elif sys.argv[1] == "Write":
         parsed_args = parse_write_args()
         writer(client, parsed_args[0], parsed_args[1], parsed_args[2], parsed_args[3])
-
-
-
-
+    elif sys.argv[1] == "Clean":
+        parsed_args = parse_clean_args()
+        cleaner(client, parsed_args[0])
+        """
+(sys.argv[1] != "Clean")
+print ("                           Clean <max user_id>")"""
