@@ -90,17 +90,20 @@ def create_all_entries():
 
 def query_stats_by_user(client, user_id):
     """
-        Request(read) and sums the last 24 hours counters of user_id
+        TODO Request(read) and sums the last 24 hours counters of user_id
     """
     user = User(client, user_id)
     counter = 0
     #print(user.tld_map.value)
     current24 = {}
-    for key in user.tld_map.value:
-        #for tld in user.tld_map.value[key]:
-        remove_visits()
+    for user in bucket.get_keys():
+        data = bucket.get(user)
+        #for hour in data.value:
+        for hour in data.iterkeys():
+            #for dom in data.value[hour]:
+            for dom, val in data.value[hour]:
+                print(dom , val)
 
-    return current24
     
 def query_stats():
     """
@@ -109,17 +112,24 @@ def query_stats():
     current_user_id = 0;
     user_dict = query_stats_by_user(client, current_user_id)
 
-#def reader(client, n, users, date):
-def reader(client,n):
+def reader(client, n, numusers, date):
+#def reader(client,n):
     """
-        Generic read of n users
+        Generic read. (n x numusers) reads, within the first users, on date
     """
     #todo date
-    key = randrange(10)
+    #key = randrange(10)
     usertemp = []
+    bucket = client.bucket_type('maps').bucket('trackers')
+    #for user in bucket.get_keys(): All users
     for i in range(n):
-        usertemp[i] = query_stats_by_user(client,i)
-    return usertemp
+        for user in range(numusers): #n users
+            data = bucket.get(str(user))
+            #for hour in data.value:
+            for hour in data.iterkeys(): #key generator
+                #for dom in data.value[hour]:
+                for dom, val in data.value[hour].iteritems():
+                    print(dom[0], kind),
 
 def writer(client, n, users, tlds, time):
     """
@@ -143,7 +153,8 @@ def cleaner(client, users):
     
 
 def parse_read_args():
-    if len(sys.argv) != 4:
+    if len(sys.argv) != 5:
+        print(len(sys.argv))
         print("Bad read  arguments number")
         print("Usage: python datamodel.py Read <count> <max user_id> <max_domain_id>")
     count = int(sys.argv[2]) 
