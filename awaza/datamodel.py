@@ -29,15 +29,11 @@ class User:
             get action to the bucket "trackers" on type "maps"
             includes user creation on key = user_id
         """
-        self.client = client
         #self.maxdate = 99999999
         #self.mindate = 00000000
         self.user_id = str(user_id)
-        bucket_str = 'trackers'
-        bucket = self.client.bucket_type('maps').bucket(bucket_str)
-        key = self.user_id
-        existing_map = bucket.get(key)
-        self.tld_map = existing_map
+        bucket = self.client.bucket_type('maps').bucket('trackers')
+        self.tld_map = bucket.get(user_id)
 
     def visit_host(self, host, time):
         """
@@ -119,17 +115,17 @@ def reader(client, n, numusers, date):
     """
     #todo date
     #key = randrange(10)
-    usertemp = []
+    usersum = {}
     bucket = client.bucket_type('maps').bucket('trackers')
     #for user in bucket.get_keys(): All users
     for i in range(n):
         for user in range(numusers): #n users
             data = bucket.get(str(user))
-            #for hour in data.value:
             for hour in data.iterkeys(): #key generator
-                #for dom in data.value[hour]:
                 for dom, val in data.value[hour].iteritems():
+                    usersum
                     print(dom[0], kind),
+
 
 def writer(client, n, users, tlds, time):
     """
@@ -200,6 +196,4 @@ if __name__ == '__main__':
     elif sys.argv[1] == "Clean":
         parsed_args = parse_clean_args()
         cleaner(client, parsed_args[0])
-        """
-(sys.argv[1] != "Clean")
-print ("                           Clean <max user_id>")"""
+        
