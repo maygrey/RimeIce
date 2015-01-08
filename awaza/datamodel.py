@@ -1,6 +1,7 @@
 from riak import RiakClient, RiakNode, RiakObject
 from riak.datatypes import Map
 from random import randrange
+import time
 import unittest
 import sys
 
@@ -108,7 +109,7 @@ def query_stats():
     current_user_id = 0;
     user_dict = query_stats_by_user(client, current_user_id)
 
-def reader(client, n, numusers, date):
+def reader(client, n, numusers, date, every, channels):
 #def reader(client,n):
     """
         Generic read. (n x numusers) reads, within the first users, on date
@@ -119,12 +120,15 @@ def reader(client, n, numusers, date):
     bucket = client.bucket_type('maps').bucket('trackers')
     #for user in bucket.get_keys(): All users
     for i in range(n):
-        for user in range(numusers): #n users
-            data = bucket.get(str(user))
-            for hour in data.iterkeys(): #key generator
-                for dom, val in data.value[hour].iteritems():
-                    usersum
-                    print(dom[0], kind),
+        user = i % numusers
+        data = bucket.get(str(user))
+        for hour in data.iterkeys(): #key generator
+            for dom, val in data.value[hour].iteritems():
+                usersum[str(dom[0])] = usersum.setdefault(str(dom[0]),0) + 1
+        if i%every == 0:
+            print(usersum),
+            usersum = {}
+    return usersum
 
 
 def writer(client, n, users, tlds, time):
@@ -149,31 +153,36 @@ def cleaner(client, users):
     
 
 def parse_read_args():
-    if len(sys.argv) != 5:
+    if len(sys.argv) != 7:
         print(len(sys.argv))
         print("Bad read  arguments number")
-        print("Usage: python datamodel.py Read <count> <max user_id> <max_domain_id>")
-    count = int(sys.argv[2]) 
-    max_user_id = int(sys.argv[3])
-    max_domain_id = int(sys.argv[4])
-    return count, max_user_id, max_domain_id
+        print("Usage: python datamodel.py Read <count> <max user_id> <max_domain_id> <every> <channels>")
+    else:
+        count = int(sys.argv[2]) 
+        max_user_id = int(sys.argv[3])
+        max_domain_id = int(sys.argv[4])
+        every = int(sys.argv[5])
+        channels = int(sys.argv[6])
+        return count, max_user_id, max_domain_id, every, channels
 
 def parse_write_args():
     if len(sys.argv) != 6:
         print("Bad write arguments number")
         print("Usage: python datamodel.py Write <count> <max user_id> <max_domain_id> <date>")
-    count = int(sys.argv[2])
-    max_user_id = int(sys.argv[3])
-    max_domain_id = int(sys.argv[4])
-    date = sys.argv[5]
-    return count, max_user_id, max_domain_id, date
+    else:
+        count = int(sys.argv[2])
+        max_user_id = int(sys.argv[3])
+        max_domain_id = int(sys.argv[4])
+        date = sys.argv[5]
+        return count, max_user_id, max_domain_id, date
 
 def parse_clean_args():
     if len(sys.argv) != 3:
         print("Bad clean arguments number")
         print("Usage: python datamodel.py Clean <max user_id>")
-    num_users = int(sys.argv[2])
-    return [num_users]
+    else:
+        num_users = int(sys.argv[2])
+        return [num_users]
 
 if __name__ == '__main__':
 	#usuario = User(client, '001')
@@ -185,11 +194,11 @@ if __name__ == '__main__':
         print("Bad num of parameters")
         sys.exit(0)
     if (sys.argv[1] != "Read") and (sys.argv[1] != "Write") and (sys.argv[1] != "Clean"):
-         print("Usage: python datamodel.py Write/Read <count> <max user_id> <max_domain_id> <date>")
+         print("Usage: python datamodel.py Write/Read <count> <max user_id> <max_domain_id> <date> <every> <channels>")
          print ("                           Clean <max user_id>")
     if sys.argv[1] == "Read":
         parsed_args = parse_read_args()
-        reader (client, parsed_args[0], parsed_args[1], parsed_args[2])
+        reader (client, parsed_args[0], parsed_args[1], parsed_args[2], parsed_args[3], parsed_args[4])
     elif sys.argv[1] == "Write":
         parsed_args = parse_write_args()
         writer(client, parsed_args[0], parsed_args[1], parsed_args[2], parsed_args[3])
