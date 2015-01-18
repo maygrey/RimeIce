@@ -109,25 +109,37 @@ def query_stats():
     current_user_id = 0;
     user_dict = query_stats_by_user(client, current_user_id)
 
+def wrapper(func, *args, **kwargs):
+    """
+        Decorator to measure the execution time of a func with arguments
+    """
+    def wrapped():
+        return func(*args, **kwargs)
+    return wrapped
+
 def reader(client, n, numusers, date, every, channels):
 #def reader(client,n):
+
     """
         Generic read. (n x numusers) reads, within the first users, on date
     """
-    #todo date
-    #key = randrange(10)
+
     usersum = {}
     bucket = client.bucket_type('maps').bucket('trackers')
+
+    start_time = time.time()
     #for user in bucket.get_keys(): All users
+
     for i in range(n):
         user = i % numusers
         data = bucket.get(str(user))
-        for hour in data.iterkeys(): #key generator
+        for hour in data.iterkeys(): 
             for dom, val in data.value[hour].iteritems():
                 usersum[str(dom[0])] = usersum.setdefault(str(dom[0]),0) + 1
         if i%every == 0:
             print(usersum),
             usersum = {}
+    print(time.time() - start_time)
     return usersum
 
 
@@ -136,6 +148,7 @@ def writer(client, n, users, tlds, time):
         write a number of users visits on random user_id 
         random domain(tld) and random date (time YYYYMMDD + random(HH))
     """
+    timeit.timer
     for i in range(n):
         date = "20141218" + str(randrange(23)).zfill(2)
         key = randrange(users)
@@ -154,7 +167,7 @@ def cleaner(client, users):
 
 def parse_read_args():
     if len(sys.argv) != 7:
-        print(len(sys.argv))
+        print(len(sys.argv)),
         print("Bad read  arguments number")
         print("Usage: python datamodel.py Read <count> <max user_id> <max_domain_id> <every> <channels>")
     else:
