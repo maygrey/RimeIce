@@ -33,8 +33,8 @@ class User:
         #self.maxdate = 99999999
         #self.mindate = 00000000
         self.user_id = str(user_id)
-        bucket = self.client.bucket_type('maps').bucket('trackers')
-        self.tld_map = bucket.get(user_id)
+        bucket = client.bucket_type('maps').bucket('trackers')
+        self.tld_map = bucket.get(self.user_id)
 
     def visit_host(self, host, time):
         """
@@ -137,24 +137,25 @@ def reader(client, n, numusers, date, every, channels):
             for dom, val in data.value[hour].iteritems():
                 usersum[str(dom[0])] = usersum.setdefault(str(dom[0]),0) + 1
         if i%every == 0:
-            print(usersum),
+            #print(usersum),
             usersum = {}
     print(time.time() - start_time)
     return usersum
 
 
-def writer(client, n, users, tlds, time):
+def writer(client, n, users, tlds, ttime):
     """
         write a number of users visits on random user_id 
         random domain(tld) and random date (time YYYYMMDD + random(HH))
     """
-    timeit.timer
+    start_time = time.time()
     for i in range(n):
         date = "20141218" + str(randrange(23)).zfill(2)
         key = randrange(users)
         tld = "dom" + str(randrange(tlds)) + ".com"
         usertemp = User(client, key)
         usertemp.visit_host(tld, date)
+    print(time.time() - start_time)
 
 def cleaner(client, users):
     """
@@ -169,14 +170,14 @@ def parse_read_args():
     if len(sys.argv) != 7:
         print(len(sys.argv)),
         print("Bad read  arguments number")
-        print("Usage: python datamodel.py Read <count> <max user_id> <max_domain_id> <every> <channels>")
+        print("Usage: python datamodel.py Read <count> <max user_id> <date> <every> <channels>")
     else:
         count = int(sys.argv[2]) 
         max_user_id = int(sys.argv[3])
-        max_domain_id = int(sys.argv[4])
+        date = int(sys.argv[4])
         every = int(sys.argv[5])
         channels = int(sys.argv[6])
-        return count, max_user_id, max_domain_id, every, channels
+        return count, max_user_id, date, every, channels
 
 def parse_write_args():
     if len(sys.argv) != 6:
